@@ -46,7 +46,7 @@ Using your own Yoto developer app? Make it a **Public Client**, add `http://127.
 
 The plugin asks for access to view, configure and control your players, plus read-only access to your card library (used to name shortcut switches and to list your cards as TV inputs). If you signed in with an older version, sign in again so the new permissions apply.
 
-The plugin refreshes its tokens on its own. If the login ever expires or is revoked, the Homebridge log will say so. Sign in again from the plugin settings.
+The plugin refreshes its tokens on its own, about once a day, and logs each refresh. If the login ever expires or is revoked, the plugin settings show **Yoto login expired** and the Home app shows the players as **Not Responding**. Sign in again from the plugin settings, then restart the child bridge.
 
 ## Settings
 

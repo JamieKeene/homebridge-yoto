@@ -5,7 +5,7 @@
  */
 
 /** @import {IHomebridgePluginUi} from '@homebridge/plugin-ui-utils/ui.interface' */
-/** @import { AuthConfigResponse, AuthStartResponse, AuthExchangeResponse } from '../server.js' */
+/** @import { AuthConfigResponse, AuthStartResponse, AuthExchangeResponse, AuthStatusResponse } from '../server.js' */
 
 /**
  * @global
@@ -55,6 +55,7 @@ async function initializeUI () {
   document.getElementById('cancelAuthButton')?.addEventListener('click', showAuthRequired)
   document.getElementById('retryButton')?.addEventListener('click', showAuthRequired)
   document.getElementById('logoutButton')?.addEventListener('click', logout)
+  document.getElementById('reauthButton')?.addEventListener('click', startAuthorization)
   getInput('callbackInput')?.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') finishAuthorization()
   })
@@ -63,7 +64,7 @@ async function initializeUI () {
 
   // Load auth config and check authentication status
   await loadAuthConfig()
-  checkAuthStatus()
+  await checkAuthStatus()
 }
 
 // Initialize on ready
@@ -81,6 +82,7 @@ function showSection (sectionToShow, options = {}) {
     'authRequired',
     'authCodeSection',
     'authSuccess',
+    'authExpired',
     'errorSection'
   ]
 
@@ -284,13 +286,9 @@ async function finishAuthorization () {
     config.accessToken = result.accessToken
     config.tokenExpiresAt = result.tokenExpiresAt
 
-    // Only store a client ID when it differs from the default, so future
-    // default changes apply automatically.
-    if (result.clientId && result.clientId !== defaultClientId) {
-      config.clientId = result.clientId
-    } else {
-      delete config.clientId
-    }
+    // Always set the client ID. Deleting it isn't enough: the settings form
+    // keeps the value it loaded (e.g. a retired client ID) and saves it back.
+    config.clientId = result.clientId
 
     await homebridge.updatePluginConfig(pluginConfig)
     await homebridge.savePluginConfig()
@@ -339,13 +337,32 @@ async function logout () {
 }
 
 /**
- * Check initial authentication status
+ * Check initial authentication status. Saved tokens aren't proof of a working
+ * login, so ask whether the plugin found that Yoto rejected them.
+ * @returns {Promise<void>}
  */
-function checkAuthStatus () {
+async function checkAuthStatus () {
   const config = pluginConfig[0]
-  if (config?.refreshToken && config?.accessToken) {
-    showSection('authSuccess')
-  } else {
+  if (!config?.refreshToken || !config?.accessToken) {
     showAuthRequired()
+    return
   }
+
+  try {
+    /** @type {AuthStatusResponse} */
+    const status = await homebridge.request('/auth/status', { refreshToken: config.refreshToken })
+    if (status.expired) {
+      const detail = document.getElementById('authExpiredMessage')
+      if (detail) {
+        const when = status.at ? new Date(status.at).toLocaleString() : ''
+        detail.textContent = [when && `Since ${when}.`, status.message].filter(Boolean).join(' ')
+      }
+      showSection('authExpired')
+      return
+    }
+  } catch (error) {
+    // Older Homebridge UI versions or a read error: fall back to the saved tokens
+    console.error('Failed to check the login status:', error)
+  }
+  showSection('authSuccess')
 }

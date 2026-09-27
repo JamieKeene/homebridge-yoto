@@ -39,9 +39,9 @@ node --test lib/foo.test.js
   - `lib/card-controls.js`: card controls, plus the shared `PlayableCard` type.
   - `lib/service-config.js`: service toggles, plus the TV library toggle and the sleep timer minutes per 1%.
   - `lib/shortcuts.js`: parses device shortcuts, names the built-in ones, resolves date placeholders.
-- `lib/utils/`: small pure helpers (volume and sleep timer maths, OAuth/PKCE, token config rewrite, listener tracking, status-scope fallback, family library fetch, TV input identifiers and display order). Put new testable logic here.
+- `lib/utils/`: small pure helpers (volume and sleep timer maths, OAuth/PKCE, token config rewrite, listener tracking, status-scope fallback, family library fetch, TV input identifiers and display order, login status file, marking accessories unreachable). Put new testable logic here.
 - `homebridge-ui/`: the custom settings UI.
-  - `server.js` runs in the Homebridge UI process and handles the OAuth start/exchange.
+  - `server.js` runs in the Homebridge UI process and handles the OAuth start/exchange. `/auth/status` reports a login the plugin found dead (below).
   - `public/client.js` and `public/index.html` run in the browser.
   - `public/logo.png` (256×256) is the only copy of the logo. The README links to it on GitHub. The icon on homebridge/plugins is a separate 100×100 upload.
 - **Schema:**
@@ -58,6 +58,11 @@ node --test lib/foo.test.js
   - Old client ID `Y4HJ8BFq…` (upstream's app) is in `LEGACY_CLIENT_IDS` and is replaced with the default on sign-in.
 - **Refresh with the client ID the tokens were issued to.** Yoto rejects a refresh token sent with another client ID (403 `invalid_grant`, "The client associated with this refresh token … is different"). The settings form can save a stale `clientId` back after signing in, so the platform reads the access token's `azp` claim (`lib/utils/token-client-id.js`) and uses that, falling back to `config.clientId`.
 - **Child bridges can start with stale tokens.** Homebridge hands a child bridge the config it read at startup, and reuses it when the child restarts after its process exits (only a restart from the UI re-reads config.json). After a token refresh that copy holds a rotated refresh token, and Yoto answers `invalid_grant - Unknown or invalid refresh token`; reusing one may also revoke the newer tokens. `useNewerSavedTokens()` in the platform reads config.json at startup and takes newer tokens from it.
+- **A dead login must be visible.** Saved tokens aren't proof that the login works. When Yoto rejects it (`invalid_grant` on refresh, 401/403 at start, or a malformed saved token), `handleLoginProblem()` in the platform does two things:
+  - It writes `yoto-login-status.json` to the Homebridge storage folder (`lib/utils/login-status.js`), holding a fingerprint of the refresh token, never the token. The settings UI shows "Yoto login expired" when the fingerprint matches the refresh token it has; a new sign-in doesn't match, so it clears itself. A successful start deletes the file.
+  - It replaces every accessory's get/set handlers with `SERVICE_COMMUNICATION_FAILURE` (`lib/utils/unreachable.js`), so Home shows "Not Responding" instead of stale tiles. Signed out (no tokens), cached accessories get the same treatment once Homebridge finishes launching.
+- **Refreshes are logged at info** ("Refreshing the Yoto login...", then "...saved it to config.json"), so a refresh cut short or not saved shows in the normal log. Refresh tokens are single-use: an unsaved refresh is lost on the next restart.
+- **The settings form keeps values the client deletes.** `delete config.clientId` in `client.js` didn't reach the saved config: the form saved back the value it loaded. Set values explicitly instead. Token saves (`applyTokenUpdate`) also replace a saved `clientId` that differs from the tokens' `azp`.
 - **Scopes are per app.** `OAUTH_SCOPES` in `lib/settings.js` must match the scopes enabled on the Yoto developer app (`tpc_ot5BY24FLyZoCX9MnykipB`).
   - `openid` and `profile` are not offered.
   - Adding a scope means changing both the code and the dashboard, and existing users must sign in again.
