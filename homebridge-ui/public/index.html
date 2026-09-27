@@ -114,6 +114,23 @@
     </div>
   </div>
 
+  <!-- Login Expired -->
+  <div id="authExpired" style="display: none">
+    <div class="alert alert-danger">
+      <h5>Yoto login expired</h5>
+      <p>
+        Yoto no longer accepts the saved login, so your players can't be
+        controlled from HomeKit. Sign in again, then restart the child bridge.
+      </p>
+      <p class="small mb-0" id="authExpiredMessage"></p>
+    </div>
+    <div class="text-center">
+      <button id="reauthButton" type="button" class="btn btn-primary btn-lg">
+        Sign in again
+      </button>
+    </div>
+  </div>
+
   <!-- Error Display -->
   <div id="errorSection" style="display: none">
     <div class="alert alert-danger">

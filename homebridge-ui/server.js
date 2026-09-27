@@ -17,6 +17,7 @@ import {
   OAUTH_SCOPES,
 } from '../lib/settings.js'
 import { createOAuthState, createPkcePair, parseAuthorizationResponse } from '../lib/utils/oauth.js'
+import { readLoginProblem } from '../lib/utils/login-status.js'
 
 const AUDIENCE = 'https://api.yotoplay.com'
 /** Sign-in attempts are discarded after this long */
@@ -47,6 +48,7 @@ class YotoUiServer extends HomebridgePluginUiServer {
     this.onRequest('/auth/config', getAuthConfig)
     this.onRequest('/auth/start', startAuthorization)
     this.onRequest('/auth/exchange', exchangeAuthorizationCode)
+    this.onRequest('/auth/status', (/** @type {AuthStatusRequest} */ payload) => getLoginStatus(this.homebridgeStoragePath, payload))
 
     // this MUST be called when you are ready to accept requests
     this.ready()
@@ -76,6 +78,34 @@ async function getAuthConfig () {
     legacyClientIds: LEGACY_CLIENT_IDS,
     redirectUri: OAUTH_REDIRECT_URI,
   }
+}
+
+/**
+ * Request payload for /auth/status endpoint
+ * @typedef {Object} AuthStatusRequest
+ * @property {string} [refreshToken] - Refresh token in the settings being shown
+ */
+
+/**
+ * Response from /auth/status endpoint
+ * @typedef {Object} AuthStatusResponse
+ * @property {boolean} expired - True when the plugin found this login no longer works
+ * @property {string} [message] - What went wrong
+ * @property {string} [at] - When it happened (ISO 8601)
+ */
+
+/**
+ * Whether the plugin recorded that the saved login stopped working. The plugin
+ * records the refresh token's fingerprint, so a login replaced by signing in
+ * again isn't reported.
+ * @param {string | undefined} storagePath - Homebridge storage folder
+ * @param {AuthStatusRequest} payload
+ * @returns {Promise<AuthStatusResponse>}
+ */
+async function getLoginStatus (storagePath, payload) {
+  if (!storagePath) return { expired: false }
+  const problem = await readLoginProblem(storagePath, payload?.refreshToken)
+  return problem ? { expired: true, message: problem.message, at: problem.at } : { expired: false }
 }
 
 /**
