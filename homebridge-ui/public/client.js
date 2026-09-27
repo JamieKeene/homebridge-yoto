@@ -288,6 +288,7 @@ async function finishAuthorization () {
 
     // Always set the client ID. Deleting it isn't enough: the settings form
     // keeps the value it loaded (e.g. a retired client ID) and saves it back.
+    // If the default ever changes, add the old one to LEGACY_CLIENT_IDS.
     config.clientId = result.clientId
 
     await homebridge.updatePluginConfig(pluginConfig)
@@ -317,9 +318,11 @@ async function logout () {
   try {
     homebridge.showSpinner()
 
+    // Blank the tokens rather than deleting them: the settings form keeps
+    // values the client deletes and would save the old login back
     const config = getPlatformBlock()
-    delete config.refreshToken
-    delete config.accessToken
+    config.refreshToken = ''
+    config.accessToken = ''
     delete config.tokenExpiresAt
 
     await homebridge.updatePluginConfig(pluginConfig)
