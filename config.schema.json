@@ -174,6 +174,45 @@
             "type": "boolean",
             "default": true,
             "description": "Expose day/night max volume controls."
+          },
+          "nativeControls": {
+            "title": "Native iPhone Now Playing (Experimental)",
+            "type": "boolean",
+            "default": false,
+            "description": "Show each Yoto in Control Other Speakers & TVs with card artwork, playback navigation and volume controls. Homebridge manages the receiver. Requires Python with venv/pip and Git; dependencies install automatically on first startup."
+          }
+        }
+      },
+      "nativeControls": {
+        "title": "Native iPhone Controls",
+        "type": "object",
+        "properties": {
+          "address": {
+            "title": "Native Controls LAN Address",
+            "type": "string",
+            "description": "Leave blank to detect a single LAN IPv4 address. On Unraid with multiple interfaces, enter the Homebridge host LAN address. Homebridge must use host networking."
+          },
+          "port": {
+            "title": "Native Controls First Port",
+            "type": "integer",
+            "minimum": 1024,
+            "maximum": 65535,
+            "default": 7000,
+            "description": "First receiver TCP port. Each Yoto uses the next port; event/data ports are assigned automatically."
+          },
+          "pythonPath": {
+            "title": "Native Controls Python Executable",
+            "type": "string",
+            "default": "python3",
+            "description": "Python executable or absolute path. A dedicated runtime is created automatically in Homebridge storage."
+          },
+          "devices": {
+            "title": "Native Controls Players",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional player names or device IDs. Leave empty to expose all Yotos."
           }
         }
       }
@@ -208,6 +247,7 @@
           "helpvalue": "<p>The older <strong>External Smart Speaker</strong> option has moved to the <em>Advanced</em> section below.</p>"
         },
         "services.playbackControls",
+        "services.nativeControls",
         "services.television",
         {
           "key": "services.televisionLibrary",
@@ -255,6 +295,26 @@
       "items": [
         "name",
         "httpPollIntervalMs",
+        {
+          "type": "section",
+          "title": "Native iPhone Controls",
+          "condition": {
+            "functionBody": "return model.services && model.services.nativeControls === true"
+          },
+          "items": [
+            "nativeControls.address",
+            "nativeControls.port",
+            "nativeControls.pythonPath",
+            {
+              "key": "nativeControls.devices",
+              "type": "array",
+              "startEmpty": true,
+              "items": [
+                "nativeControls.devices[]"
+              ]
+            }
+          ]
+        },
         {
           "type": "help",
           "helpvalue": "<p><strong>Legacy: External Smart Speaker.</strong> Older playback option kept for existing setups. It only works in scenes and automations. The Home app shows \"Controls not available\" for it and can't show what's playing, because iOS only offers those for AirPlay speakers. For more features, turn on the <strong>TV Playback Accessory</strong> under <em>Accessory Services</em> instead. It supports the iPhone remote, volume buttons, and inputs for card controls and shortcuts. If you switch, remove the old Smart Speaker from the Home app by hand.</p>"

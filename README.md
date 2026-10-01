@@ -25,6 +25,63 @@ Homebridge plugin that exposes Yoto players to HomeKit: playback and volume, car
 
 This is a maintained fork of [bcomnes/homebridge-yoto](https://github.com/bcomnes/homebridge-yoto).
 
+## Native iPhone Now Playing (experimental)
+
+Enable **Native iPhone Now Playing** in the plugin's **Accessory Services** settings
+and restart Homebridge. Stop the standalone prototype/container first so its port
+and name do not conflict. Each Yoto appears under **Control Other Speakers & TVs**,
+with live card/track metadata, available cover artwork, volume, and play/pause/stop controls. Previous/next
+select adjacent tracks when ordered card details from `/card/{cardId}` and the current track keys are
+available; navigation stops at the card boundaries. Volume follows the player
+and respects its active maximum volume limit.
+Homebridge starts and stops the receivers automatically and reuses its existing
+Yoto account. No separate receiver container, bridge token, or device-ID lookup is
+needed. This research branch must be installed in Homebridge; it is not an npm
+release yet.
+
+The Homebridge environment needs Python with `venv`/`pip` and Git. The plugin
+installs the pinned receiver dependencies into its persistent storage on the first
+startup; allow a few minutes. Python must be installed **inside** the Homebridge
+container when using Docker. For Debian/Ubuntu containers the packages are
+`python3`, `python3-venv`, `python3-pip`, and `git`; keep these in your container
+image or persistent startup setup so recreating it does not remove them. The
+plugin does not install system packages or require Homebridge to run as root.
+Linux and macOS are supported; Windows is not supported for this feature.
+
+Under **Advanced → Native iPhone Controls**, optionally select player names (empty
+means all), override the Python executable, or choose the first receiver port
+(default 7000, followed by one port per player). The LAN address is detected when
+there is one external IPv4 interface. On Unraid, enter the Homebridge host's LAN IP
+if there are multiple interfaces. Homebridge Docker must use **host networking**
+for multicast discovery and the dynamically allocated event/data ports.
+
+For JSON configuration, add these fields to the existing Yoto platform entry:
+
+```json
+"services": {
+  "nativeControls": true
+},
+"nativeControls": {
+  "address": "192.0.2.10",
+  "port": 7000
+}
+```
+
+Merge `nativeControls` into your existing `services` object; keep the other service
+settings. The separate `nativeControls` object is optional unless address detection
+needs an override. Turn the switch off and restart to remove the receivers.
+
+This remains experimental. Play/pause, volume, artwork, and previous/next have
+been tested with physical Yoto players and an iPhone. Integration tests cover
+pairing, encrypted transport, command forwarding, offline handling, and receiver
+lifecycle with fake devices. Progress uses timestamped positions and smooths minor
+reporting jitter; long-session and card removal/reinsertion behaviour still need
+broader testing. Seeking, audio reception, and persistent pairing are not implemented.
+Previous/next are disabled when card navigation metadata is unavailable or no
+adjacent track exists. Interactive cards do not expose linear navigation.
+The AirPlay control endpoint permits clients on your trusted LAN to control the
+selected Yotos; do not expose these ports to the internet.
+
 ## Install
 
 Search for `@mdjhnson/homebridge-yoto` in the Homebridge UI **Plugins** tab, or run:
@@ -124,7 +181,12 @@ The TV accessory, and the legacy Smart Speaker below, are external accessories. 
 
 ## Privacy
 
-The plugin only connects to Yoto's API and MQTT service, using your own sign-in. It has no analytics or tracking. The only file it changes is Homebridge's `config.json`, to save refreshed sign-in tokens. It writes a temporary copy next to `config.json` first and renames it into place, so an interrupted save can't corrupt the file.
+The plugin connects to Yoto's API and MQTT service using your own sign-in. It has
+no analytics or tracking. Optional native controls also download cover artwork
+from metadata URLs and advertise receiver services on your LAN. First-run receiver
+setup downloads pinned Python dependencies and keeps its runtime in Homebridge's
+persistent storage. The plugin updates Homebridge's `config.json` to save refreshed
+sign-in tokens. It writes a temporary copy next to `config.json` first and renames it into place, so an interrupted save can't corrupt the file.
 
 ## Development
 
