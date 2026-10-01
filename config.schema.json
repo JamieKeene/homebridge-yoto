@@ -188,26 +188,29 @@
         "type": "object",
         "properties": {
           "address": {
-            "title": "Native Controls LAN Address",
+            "title": "LAN address",
             "type": "string",
             "description": "Leave blank to detect a single LAN IPv4 address. On Unraid with multiple interfaces, enter the Homebridge host LAN address. Homebridge must use host networking."
           },
           "port": {
-            "title": "Native Controls First Port",
+            "title": "First port",
             "type": "integer",
             "minimum": 1024,
             "maximum": 65535,
             "default": 7000,
-            "description": "First receiver TCP port. Each Yoto uses the next port; event/data ports are assigned automatically."
+            "description": "First receiver TCP port. Each Yoto uses the next port; event/data ports are assigned automatically.",
+            "x-schema-form": {
+              "type": "number"
+            }
           },
           "pythonPath": {
-            "title": "Native Controls Python Executable",
+            "title": "Python executable",
             "type": "string",
             "default": "python3",
             "description": "Python executable or absolute path. A dedicated runtime is created automatically in Homebridge storage."
           },
           "devices": {
-            "title": "Native Controls Players",
+            "title": "Players",
             "type": "array",
             "items": {
               "type": "string"
@@ -303,14 +306,28 @@
           },
           "items": [
             "nativeControls.address",
-            "nativeControls.port",
+            {
+              "key": "nativeControls.port",
+              "type": "number"
+            },
             "nativeControls.pythonPath",
+            {
+              "type": "help",
+              "helpvalue": "<p class=\"mb-1\">Players</p><p class=\"text-muted small\">Optional player names or device IDs. Leave empty to expose all Yotos.</p>"
+            },
             {
               "key": "nativeControls.devices",
               "type": "array",
+              "notitle": true,
+              "description": "",
               "startEmpty": true,
+              "buttonText": "Add player",
               "items": [
-                "nativeControls.devices[]"
+                {
+                  "key": "nativeControls.devices[]",
+                  "notitle": true,
+                  "placeholder": "Player name or device ID"
+                }
               ]
             }
           ]
