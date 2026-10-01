@@ -59,7 +59,10 @@
     "!lib/**/*.test.js",
     "homebridge-ui/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "experiments/mediaremote/receiver.py",
+    "experiments/mediaremote/requirements.txt",
+    "experiments/mediaremote/THIRD_PARTY_LICENSES.txt"
   ],
   "publishConfig": {
     "access": "public"
