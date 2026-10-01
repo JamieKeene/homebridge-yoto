@@ -1,2 +1,2 @@
 # Pin the internal APIs used by this experiment to the inspected revision.
-pyatv @ git+https://github.com/postlund/pyatv.git@b277a4c8222ecdcbaab8a24e3e713ca44765adb4
+pyatv @ https://github.com/postlund/pyatv/archive/b277a4c8222ecdcbaab8a24e3e713ca44765adb4.zip

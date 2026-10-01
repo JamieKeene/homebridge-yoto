@@ -11,7 +11,7 @@ operation has not yet been verified.
 
 ## Run on a Mac or Linux machine
 
-Use Python 3.12 and Git. Connect the machine and iPhone to the same LAN. Replace
+Use Python 3.12 with `venv` and `pip`. Connect the machine and iPhone to the same LAN. Replace
 `192.168.1.100` below with the machine's LAN IPv4 address (on a Wi-Fi Mac,
 `ipconfig getifaddr en0` usually shows it).
 
@@ -192,5 +192,5 @@ reject unsupported commands/audio, and reject an invalid pairing proof.
 - [pyatv data/event channels](https://github.com/postlund/pyatv/blob/b277a4c8222ecdcbaab8a24e3e713ca44765adb4/pyatv/protocols/airplay/channels.py)
 - [pyatv simulated MRP receiver](https://github.com/postlund/pyatv/blob/b277a4c8222ecdcbaab8a24e3e713ca44765adb4/tests/fake_device/mrp.py)
 
-The pyatv dependency is pinned to the inspected Git revision because this uses
+The pyatv dependency is installed from an archive pinned to the inspected revision because this uses
 internal protocol APIs. Its MIT license is supplied by the installed dependency.

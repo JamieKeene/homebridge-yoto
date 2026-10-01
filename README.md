@@ -39,11 +39,11 @@ Yoto account. No separate receiver container, bridge token, or device-ID lookup 
 needed. This research branch must be installed in Homebridge; it is not an npm
 release yet.
 
-The Homebridge environment needs Python with `venv`/`pip` and Git. The plugin
+The Homebridge environment needs Python with `venv`/`pip`. The plugin
 installs the pinned receiver dependencies into its persistent storage on the first
 startup; allow a few minutes. Python must be installed **inside** the Homebridge
 container when using Docker. For Debian/Ubuntu containers the packages are
-`python3`, `python3-venv`, `python3-pip`, and `git`; keep these in your container
+`python3`, `python3-venv`, and `python3-pip`; keep these in your container
 image or persistent startup setup so recreating it does not remove them. The
 plugin does not install system packages or require Homebridge to run as root.
 Linux and macOS are supported; Windows is not supported for this feature.
